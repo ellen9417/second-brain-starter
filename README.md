@@ -1,39 +1,41 @@
 # Second Brain Starter
 
-**A personal knowledge wiki operated *by* an LLM, not just written *with* one — built on Claude Code, structured as an ontology.**
+**한국어** | [English](README.en.md)
 
-Based on [Karpathy's LLM Wiki idea](https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f): you drop raw material in, the LLM reads it through *your* lens, writes and cross-links wiki pages, and answers questions with page-level citations. This starter adds an **ontology layer** (typed entities, typed relations, live data bindings) so the wiki stays queryable and healthy as it grows.
+**LLM으로 글만 쓰는 게 아니라, LLM이 직접 *운영하는* 개인 지식 위키 — Claude Code 기반, 온톨로지 구조.**
 
-> This is the generalized template of a wiki I operate daily (90+ pages). Names and content here are fictional samples; the operating rules and schema are the real ones.
+[Karpathy의 LLM Wiki 아이디어](https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f)가 출발점입니다: 원본 자료를 넣으면 LLM이 *나의* 렌즈로 읽고, 위키 페이지를 작성·교차 연결하고, 질문에는 페이지 출처를 달아 답합니다. 이 스타터는 여기에 **온톨로지 레이어**(타입드 개체, 타입드 관계, 실시간 데이터 바인딩)를 더해 위키가 커져도 질의 가능하고 건강하게 유지되도록 합니다.
 
-## How it works
+> 실제로 매일 운영 중인 위키(90+ 페이지)의 구조를 일반화한 템플릿입니다. 여기 담긴 이름과 콘텐츠는 가상 샘플이고, 운영 규칙과 스키마는 실제 그대로입니다.
+
+## 동작 방식
 
 ```
-raw/   ← you drop source material here (LLM never edits this)
-wiki/  ← LLM writes/updates pages here, cross-linked with [[wikilinks]]
-CLAUDE.md  ← the operating rules the LLM follows (the heart of this repo)
+raw/   ← 원본 자료를 넣는 곳 (LLM은 절대 수정하지 않음)
+wiki/  ← LLM이 작성·갱신하는 페이지, [[위키링크]]로 교차 연결
+CLAUDE.md  ← LLM이 따르는 운영 규칙 (이 리포의 심장)
 ```
 
-Four operations, all triggered by plain Korean/English chat:
+운영은 4가지, 전부 채팅 한마디로 발동합니다:
 
-| Operation | Trigger | What happens |
+| 운영 | 트리거 | 동작 |
 |---|---|---|
-| **Ingest** | "이거 정리해줘" | Reads raw/, extracts takeaways through your personal lens, writes/updates a wiki page, cross-links it, updates the index and log |
-| **Ask** | any question | Finds relevant pages via the index, answers **with page citations**, flags gaps |
-| **Health check** | "건강검진" | Orphan pages, broken links, duplicates, stale pages, index drift, missing takeaways, ontology violations |
-| **Standup** | "standup" | Pulls your live sources (calendar, saved messages, docs) by SoT priority and briefs today's actions — answer-only, never auto-edits the wiki |
+| **Ingest** | "이거 정리해줘" | raw/를 읽고, 개인 렌즈로 takeaway를 뽑고, 위키 페이지 작성/갱신 + 교차 링크 + 목차·로그 갱신 |
+| **Ask** | 아무 질문 | 목차에서 관련 페이지를 찾아 **페이지 출처를 달아** 답변, 빠진 부분은 플래그 |
+| **건강검진** | "건강검진" | 고아 페이지, 깨진 링크, 중복, 신선도, 목차 정합성, takeaway 누락, 온톨로지 위반 점검 |
+| **Standup** | "standup" | SoT 우선순위대로 라이브 소스(캘린더·저장 메시지·문서)를 pull해 오늘의 액션 브리핑 — 답변 전용, 위키 자동 수정 없음 |
 
-## The ontology layer
+## 온톨로지 레이어
 
-Plain wikis rot: pages pile up, links break, nothing is queryable. This starter treats the wiki as an ontology with three layers (inspired by Palantir's model):
+평범한 위키는 썩습니다: 페이지가 쌓이고, 링크가 끊기고, 아무것도 질의할 수 없게 됩니다. 이 스타터는 위키를 3레이어 온톨로지로 다룹니다 (팔란티어 모델에서 착안):
 
-- **Semantic** — every page declares a `type:` (Project, Method, Case, Policy, …) from a controlled vocabulary in [`wiki/_ontology.md`](wiki/_ontology.md); meaningful links carry typed relations (`part_of`, `impacts`, `evaluates`, …) aggregated in [`wiki/_entities.md`](wiki/_entities.md)
-- **Kinetic** — living pages declare data bindings (`src_jira`, `src_calendar`, …) so questions get answered with *current* state, pulled at answer time
-- **Dynamic** — decisions are version-controlled like code: AI proposal = branch, your approval = merge, history = log
+- **Semantic** — 모든 페이지가 `type:`(Project, Method, Case, Policy, …)을 선언. controlled vocabulary는 [`wiki/_ontology.md`](wiki/_ontology.md), 의미 있는 링크는 타입드 관계(`part_of`, `impacts`, `evaluates`, …)로 [`wiki/_entities.md`](wiki/_entities.md)에 집계
+- **Kinetic** — 살아있어야 하는 페이지는 데이터 바인딩(`src_jira`, `src_calendar`, …)을 선언 → 질문 시점에 *현재* 상태를 pull해 답변
+- **Dynamic** — 의사결정을 코드처럼 버전관리: AI 제안 = branch, 오너 승인 = merge, 이력 = log
 
-Two rules keep it honest: new types/relations must be registered in the schema **before** use, and pulled live data never silently overwrites the wiki body.
+정직함을 지키는 규칙 둘: 새 타입/관계는 사용 **전에** 스키마에 등록해야 하고, pull한 실시간 데이터가 위키 본문을 조용히 덮어쓰지 않습니다.
 
-## Quickstart
+## 시작하기
 
 ```bash
 git clone <this repo> my-second-brain
@@ -41,23 +43,23 @@ cd my-second-brain
 claude
 ```
 
-1. Open `CLAUDE.md` and fill in **§0 (your context)** — role, mission, domains, career direction. Every takeaway the LLM writes is filtered through this lens, so this section does the most work.
-2. Drop any document into `raw/` and say **"정리해줘"**. Check the sample pages in `wiki/` to see the expected output shape.
-3. Ask it something. Then run **"건강검진"** after a week.
+1. `CLAUDE.md`의 **§0 (오너 맥락)**을 채우세요 — 역할, 미션, 도메인, 커리어 방향. LLM이 쓰는 모든 takeaway가 이 렌즈를 통과하므로, 이 섹션이 일을 가장 많이 합니다.
+2. 아무 문서나 `raw/`에 넣고 **"정리해줘"**라고 하세요. 기대 출력 형태는 `wiki/`의 샘플 페이지 참고.
+3. 아무거나 질문해 보세요. 일주일 뒤 **"건강검진"**을 돌려보세요.
 
-## What to customize
+## 커스터마이즈 포인트
 
-| Where | What |
+| 위치 | 내용 |
 |---|---|
-| `CLAUDE.md` §0 | Your context table + the two takeaway lenses (default: 실무 적용 / 커리어 자산) |
-| `wiki/_ontology.md` §1–2 | Entity types and relations — start with the defaults, register new ones as needed |
-| `wiki/_ontology.md` §4 | Your SoT priority — which source do you trust first for "my tasks"? |
-| Sample pages | Delete them once you have real ones |
+| `CLAUDE.md` §0 | 오너 맥락 표 + takeaway 렌즈 2종 (기본: 실무 적용 / 커리어 자산) |
+| `wiki/_ontology.md` §1~2 | Entity 타입과 관계 — 기본값으로 시작해 필요할 때 등록 |
+| `wiki/_ontology.md` §4 | SoT 우선순위 — "내 할 일"은 어느 소스를 먼저 믿을 것인가 |
+| 샘플 페이지 | 실제 페이지가 생기면 삭제 |
 
-## Design notes
+## 설계 노트
 
-- **Flat folders, category by index.** No folder taxonomy debates; `wiki/index.md` is the single navigation surface.
-- **Takeaway-first pages.** Every page opens with a callout answering "so what does this mean for *me*" in two lenses, before any content.
-- **Update over create.** Same topic → update the existing page. The log records every operation.
-- **Facts vs. inference are marked.** What the source says vs. what the LLM concluded stay distinguishable.
-- **Growth valve.** When the wiki approaches ~150 pages, the health check flags it and the schema points to an embedding/RAG upgrade path with ontology-metadata filters.
+- **폴더는 플랫, 분류는 목차로.** 폴더 분류 논쟁 없이 `wiki/index.md`가 유일한 내비게이션.
+- **Takeaway 우선.** 모든 페이지는 "이게 *나에게* 무슨 의미인가"를 두 렌즈로 답하는 callout으로 시작.
+- **생성보다 갱신.** 같은 주제는 기존 페이지를 갱신. 모든 작업은 로그에 기록.
+- **사실과 추론 구분.** 원본이 말한 것과 LLM이 결론 낸 것을 구분 표기.
+- **성장 밸브.** 위키가 ~150페이지에 접근하면 건강검진이 플래그를 올리고, 스키마가 온톨로지 메타데이터 필터 기반 임베딩/RAG 업그레이드 경로를 안내.
